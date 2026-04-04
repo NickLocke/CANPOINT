@@ -40,6 +40,10 @@ VLCB::EventConsumerService ecService;
 VLCB::EventTeachingService etService;
 VLCB::EventProducerService epService;
 
+// Event Variable (EV) structure
+const int EV_TYPE = 1;
+const int EV_POINT_NUMBER = 2;
+
 // Produced event groupings (becomes the high byte of the event number)
 enum {  
   PRODUCED_EVENT_POINT_MOTOR,
@@ -185,18 +189,91 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg)
 {
   Serial << F("> event handler: index = ") << eventIndex << F(", opcode = 0x") << _HEX(msg->data[0]) << endl;
 
-  // // Event Off op-codes have odd numbers.
-  // bool ison = (msg->data[0] & 0x01) == 0;
-  // if (!ison)
-  // {
-  //   // Don't react to OFF events. It's probably occuring because of misconfiguration.
-  //   return;
-  // }
-  
-  // // If there is already an entrance button active then we assume we are dealing with an exit,
-  // // other wise we are dealing with a new entrance.
-  // activeEntranceButtonNumber == 0 ? ProcessEntranceButton(eventIndex) : ProcessExitButton(eventIndex);
+  // Event Off op-codes have odd numbers. 
+  bool actionType = (msg->data[0] & 0x01) == 0; // True for on, false for off
+
+  int eventType = GetEventTypeFromEvent(eventIndex);
+  int pointNumber = GetPointNumberFromEvent(eventIndex);
+
+  switch (eventType) {
+
+    case CONSUMED_EVENT_POINT_SWITCH_NORMAL:
+      actionType ? ProcessSwitchNormalOn(eventIndex, pointNumber) : ProcessSwitchNormalOff(eventIndex, pointNumber);
+      break;
+      
+    case CONSUMED_EVENT_POINT_SWITCH_REVERSE:
+      ProcessSwitchReverse(eventIndex, actionType, pointNumber);
+      break;
+
+    case CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_NORMAL:
+      ProcessRouteRequiringNormal(eventIndex, actionType, pointNumber);
+      break;
+
+    case CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_REVERSE:
+      ProcessRouteRequiringReverse(eventIndex, actionType, pointNumber);
+      break;
+
+    case CONSUMED_EVENT_DETECTED_NORMAL:
+      ProcessDetectedNormal(eventIndex, actionType, pointNumber);
+      break;
+
+    case CONSUMED_EVENT_DETECTED_REVERSE:
+      ProcessDetectedReverse(eventIndex, actionType, pointNumber);
+      break;
+
+    case CONSUMED_EVENT_TRACK_OCCUPIED:
+      ProcessTrackOccupied(eventIndex, actionType, pointNumber);
+      break;
+
+    default:
+      Serial << F("> *** oops - unknown event type seen in EV1 - ") << eventType << endl;
+      break;
+
+  }   
+
 }
+
+void ProcessSwitchNormalOn(byte eventIndex, int pointNumber)
+{
+   // The control panel switch has been moved to the normal position
+}
+
+void ProcessSwitchNormalOff(byte eventIndex, int pointNumber)
+{
+   // The control panel switch has been moved away from the normal position
+}
+
+void ProcessSwitchReverse(byte eventIndex, bool actionType, int pointNumber)
+{
+   // The control panel switch has been moved to or from the reverse position
+}
+
+void ProcessRouteRequiringNormal(byte eventIndex, bool actionType, int pointNumber)
+{
+   // A route which requires the points to be locked normal has been called or released
+}
+
+void ProcessRouteRequiringReverse(byte eventIndex, bool actionType, int pointNumber)
+{
+   // A route which requires the points to be locked reverse has been called or released
+}
+
+void ProcessDetectedNormal(byte eventIndex, bool actionType, int pointNumber)
+{
+   // The points have been detected normal, or the detection has been lost
+}
+
+void ProcessDetectedReverse(byte eventIndex, bool actionType, int pointNumber)
+{
+   // The points have been detected reverse, or the detection has been lost
+}
+
+void ProcessTrackOccupied(byte eventIndex, bool actionType, int pointNumber)
+{
+   // The track circuit over the points has either become occupied or clear
+}
+
+
 
 // void ProcessEntranceButton(byte eventIndex)
 // {
@@ -254,17 +331,17 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg)
 //   cancelEntranceButton();
 // }
 
-// int GetButtonTypeFromEvent(byte eventIndex)
-// {
-//   int buttonType = VLCB::getEventEVval(eventIndex, ButtonTypeEV);
-//   return buttonType;
-// }
+int GetEventTypeFromEvent(byte eventIndex)
+{
+  int eventType = VLCB::getEventEVval(eventIndex, EV_TYPE);
+  return eventType;
+}
 
-// int GetButtonNumberFromEvent(byte eventIndex)
-// {
-//   int buttonNumber = VLCB::getEventEVval(eventIndex, ButtonNumberEV);
-//   return buttonNumber;
-// }
+int GetPointNumberFromEvent(byte eventIndex)
+{
+  int pointNumber = VLCB::getEventEVval(eventIndex, EV_POINT_NUMBER);
+  return pointNumber;
+}
 
 // void cancelEntranceButton()
 // {
