@@ -235,79 +235,86 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg)
 
 void ProcessSwitchNormalOn(byte eventIndex, int pointNumber)
 {
-   // The control panel switch has been moved to the normal position
-
-// int main() {
-//     char *msg = get_message();
-//     printf("%s\n", msg);
-// }
-
-
+    // The control panel switch has been moved to the normal position
+    Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved to normal position.");
 }
 
 void ProcessSwitchNormalOff(byte eventIndex, int pointNumber)
 {
-   // The control panel switch has been moved away from the normal position
+    // The control panel switch has been moved away from the normal position
+    Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved from normal to centre position.");
 }
 
 void ProcessSwitchReverseOn(byte eventIndex, int pointNumber)
 {
-   // The control panel switch has been moved to the reverse position
+    // The control panel switch has been moved to the reverse position
+    Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved to reverse position.");
 }
 
 void ProcessSwitchReverseOff(byte eventIndex, int pointNumber)
 {
-   // The control panel switch has been moved away from the reverse position
+    // The control panel switch has been moved away from the reverse position
+    Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved from reverse to centre position.");
 }
 
 void ProcessRouteRequiringNormalCalled(byte eventIndex, int pointNumber)
 {
-   // A route which requires the points to be locked normal has been called
+    // A route which requires the points to be locked normal has been called
+    Serial << F("A route which requires ") << GetPointNumberDisplay(pointNumber) << F(" to be in the normal position has been called.");
 }
 
 void ProcessRouteRequiringNormalCleared(byte eventIndex, int pointNumber)
 {
-   // A route which requires the points to be locked normal has been cleared
+    // A route which requires the points to be locked normal has been cleared
+    Serial << F("A route which required ") << GetPointNumberDisplay(pointNumber) << F(" to be in the normal position has been cleared.");
 }
 
 void ProcessRouteRequiringReverseCalled(byte eventIndex, int pointNumber)
 {
-   // A route which requires the points to be locked reverse has been called 
+    // A route which requires the points to be locked reverse has been called 
+    Serial << F("A route which requires ") << GetPointNumberDisplay(pointNumber) << F(" to be in the reverse position has been called.");
 }
 
 void ProcessRouteRequiringReverseCleared(byte eventIndex, int pointNumber)
 {
-   // A route which requires the points to be locked reverse has been cleared 
+    // A route which requires the points to be locked reverse has been cleared 
+    Serial << F("A route which required ") << GetPointNumberDisplay(pointNumber) << F(" to be in the reverse position has been cleared.");
 }
 
 void ProcessDetectedNormal(byte eventIndex, int pointNumber)
 {
-   // The points have been detected normal
+    // The points have been detected normal
+    Serial << GetPointNumberDisplay(pointNumber) << F(" detected normal.");
 }
 
 void ProcessNormalDetectionLost(byte eventIndex, int pointNumber)
 {
-   // The points are no longer detected normal
+    // The points are no longer detected normal
+    Serial << GetPointNumberDisplay(pointNumber) << F(" no longer detected normal.");
 }
 
 void ProcessDetectedReverse(byte eventIndex, int pointNumber)
 {
-   // The points have been detected reverse
+    // The points have been detected reverse
+    Serial << GetPointNumberDisplay(pointNumber) << F(" detected reverse.");
 }
 
 void ProcessReverseDetectionLost(byte eventIndex, int pointNumber)
 {
-   // The points are no longer detected reverse
+    // The points are no longer detected reverse
+    Serial << GetPointNumberDisplay(pointNumber) << F(" no longer detected reverse.");
 }
 
 void ProcessTrackOccupied(byte eventIndex, int pointNumber)
 {
-   // The track circuit over the points has become occupied
+    // The track circuit over the points has become occupied
+    Serial << F("The track over ") << GetPointNumberDisplay(pointNumber) << F(" has become occupied.");
 }
 
 void ProcessTrackCleared(byte eventIndex, int pointNumber)
 {
-   // The track circuit over the points has become clear
+    // The track circuit over the points has become clear
+    Serial << F("The track over ") << GetPointNumberDisplay(pointNumber) << F(" is no longer occupied.");
 }
 
 
