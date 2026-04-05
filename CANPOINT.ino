@@ -202,27 +202,27 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg)
       break;
       
     case CONSUMED_EVENT_POINT_SWITCH_REVERSE:
-      ProcessSwitchReverse(eventIndex, actionType, pointNumber);
+      actionType ? ProcessSwitchReverseOn(eventIndex, pointNumber) : ProcessSwitchReverseOff(eventIndex, pointNumber);
       break;
 
     case CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_NORMAL:
-      ProcessRouteRequiringNormal(eventIndex, actionType, pointNumber);
+      actionType ? ProcessRouteRequiringNormalCalled(eventIndex, pointNumber) : ProcessRouteRequiringNormalCleared(eventIndex, pointNumber);
       break;
 
     case CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_REVERSE:
-      ProcessRouteRequiringReverse(eventIndex, actionType, pointNumber);
+      actionType ? ProcessRouteRequiringReverseCalled(eventIndex, pointNumber) : ProcessRouteRequiringReverseCleared(eventIndex, pointNumber);
       break;
 
     case CONSUMED_EVENT_DETECTED_NORMAL:
-      ProcessDetectedNormal(eventIndex, actionType, pointNumber);
+      actionType ? ProcessDetectedNormal(eventIndex, pointNumber) : ProcessNormalDetectionLost(eventIndex, pointNumber);
       break;
 
     case CONSUMED_EVENT_DETECTED_REVERSE:
-      ProcessDetectedReverse(eventIndex, actionType, pointNumber);
+      actionType ? ProcessDetectedReverse(eventIndex, pointNumber) : ProcessReverseDetectionLost(eventIndex, pointNumber);
       break;
 
     case CONSUMED_EVENT_TRACK_OCCUPIED:
-      ProcessTrackOccupied(eventIndex, actionType, pointNumber);
+      actionType ? ProcessTrackOccupied(eventIndex, pointNumber) : ProcessTrackCleared(eventIndex, pointNumber);
       break;
 
     default:
@@ -236,6 +236,13 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg)
 void ProcessSwitchNormalOn(byte eventIndex, int pointNumber)
 {
    // The control panel switch has been moved to the normal position
+
+// int main() {
+//     char *msg = get_message();
+//     printf("%s\n", msg);
+// }
+
+
 }
 
 void ProcessSwitchNormalOff(byte eventIndex, int pointNumber)
@@ -243,34 +250,64 @@ void ProcessSwitchNormalOff(byte eventIndex, int pointNumber)
    // The control panel switch has been moved away from the normal position
 }
 
-void ProcessSwitchReverse(byte eventIndex, bool actionType, int pointNumber)
+void ProcessSwitchReverseOn(byte eventIndex, int pointNumber)
 {
-   // The control panel switch has been moved to or from the reverse position
+   // The control panel switch has been moved to the reverse position
 }
 
-void ProcessRouteRequiringNormal(byte eventIndex, bool actionType, int pointNumber)
+void ProcessSwitchReverseOff(byte eventIndex, int pointNumber)
 {
-   // A route which requires the points to be locked normal has been called or released
+   // The control panel switch has been moved away from the reverse position
 }
 
-void ProcessRouteRequiringReverse(byte eventIndex, bool actionType, int pointNumber)
+void ProcessRouteRequiringNormalCalled(byte eventIndex, int pointNumber)
 {
-   // A route which requires the points to be locked reverse has been called or released
+   // A route which requires the points to be locked normal has been called
 }
 
-void ProcessDetectedNormal(byte eventIndex, bool actionType, int pointNumber)
+void ProcessRouteRequiringNormalCleared(byte eventIndex, int pointNumber)
 {
-   // The points have been detected normal, or the detection has been lost
+   // A route which requires the points to be locked normal has been cleared
 }
 
-void ProcessDetectedReverse(byte eventIndex, bool actionType, int pointNumber)
+void ProcessRouteRequiringReverseCalled(byte eventIndex, int pointNumber)
 {
-   // The points have been detected reverse, or the detection has been lost
+   // A route which requires the points to be locked reverse has been called 
 }
 
-void ProcessTrackOccupied(byte eventIndex, bool actionType, int pointNumber)
+void ProcessRouteRequiringReverseCleared(byte eventIndex, int pointNumber)
 {
-   // The track circuit over the points has either become occupied or clear
+   // A route which requires the points to be locked reverse has been cleared 
+}
+
+void ProcessDetectedNormal(byte eventIndex, int pointNumber)
+{
+   // The points have been detected normal
+}
+
+void ProcessNormalDetectionLost(byte eventIndex, int pointNumber)
+{
+   // The points are no longer detected normal
+}
+
+void ProcessDetectedReverse(byte eventIndex, int pointNumber)
+{
+   // The points have been detected reverse
+}
+
+void ProcessReverseDetectionLost(byte eventIndex, int pointNumber)
+{
+   // The points are no longer detected reverse
+}
+
+void ProcessTrackOccupied(byte eventIndex, int pointNumber)
+{
+   // The track circuit over the points has become occupied
+}
+
+void ProcessTrackCleared(byte eventIndex, int pointNumber)
+{
+   // The track circuit over the points has become clear
 }
 
 
@@ -341,6 +378,48 @@ int GetPointNumberFromEvent(byte eventIndex)
 {
   int pointNumber = VLCB::getEventEVval(eventIndex, EV_POINT_NUMBER);
   return pointNumber;
+}
+
+point GetPointFromInternalNumber(int pointNumber)
+{
+  int items = sizeof(points) / sizeof(points[0]);
+  int counter;
+
+  for(counter = 0; counter < items; counter++)
+  {
+    if(points[counter].internal_number == pointNumber)
+    {
+      break;
+    }
+  }
+
+  return points[counter]; // TODO some error checking
+
+}
+
+char * GetPointNumberDisplay(int pointNumber)
+{
+  point point = GetPointFromInternalNumber(pointNumber);
+
+  static char outputBuffer[64]; // Static means that the memory is reserved and reused across multiple calls.
+  static char workingBuffer[20];
+
+  outputBuffer[0] = '\0'; 
+
+  int externalNumber = point.external_number;
+
+  strcat(outputBuffer, "Points ");
+
+  snprintf(workingBuffer, sizeof(workingBuffer), "%u", externalNumber);
+  strcat(outputBuffer, workingBuffer);
+
+  strcat(outputBuffer, " (");
+
+  snprintf(workingBuffer, sizeof(workingBuffer), "%u", pointNumber);
+  strcat(outputBuffer, workingBuffer);
+
+  strcat(outputBuffer, ")");
+  return outputBuffer;
 }
 
 // void cancelEntranceButton()
