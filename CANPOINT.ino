@@ -55,7 +55,7 @@ enum {
   PRODUCED_EVENT_SET_AND_LOCKED_REVERSE
 };
 
-// Consumed event groupings (will be sent as EV1 in the incoming event)
+// Consumed event groupings (will be received as EV1 in the incoming event)
 enum {
   CONSUMED_EVENT_POINT_SWITCH_NORMAL,
   CONSUMED_EVENT_POINT_SWITCH_REVERSE,
@@ -66,13 +66,6 @@ enum {
   CONSUMED_EVENT_TRACK_OCCUPIED
 };
 
-
-// // These variables hold details of the currently active entrance button if any. 
-// int activeEntranceButtonNumber = 0;
-// long timeEntranceButtonPressed;
-// byte possibleRoutes[NumExitRouteEVs];
-// byte possibleExitButtons[NumExitRouteEVs];
-
 // setup - runs once at power on
 void setup()
 {
@@ -80,12 +73,6 @@ void setup()
   Serial << endl << endl << F("> ** CANPOINT ** ") << __FILE__ << endl;
 
   setupVLCB();
-
-  // if (VLCB::readNV(1) == 255)
-  // {
-  //   // Default value for button press interval is 5s.
-  //   VLCB::writeNV(1, 50);
-  // }
 
   // show code version and copyright notice
   printConfig();
@@ -101,22 +88,8 @@ void loop()
   // do VLCB message, switch and LED processing
   VLCB::process();
 
-  // // Check whether an entrance button needs to be checked for a timeout
-  // // We only need to process the timeout if there is an active entrance button
-  // if(activeEntranceButtonNumber > 0)
-  // {
-  //   int buttonPressInterval = VLCB::readNV(1) * 100;
-  //   long now = millis();
-  //   bool timeOut = now > timeEntranceButtonPressed + buttonPressInterval;
+  process_serial_input();
 
-  //   if(timeOut)
-  //   {
-  //     Serial << F("> Entrance button ") << activeEntranceButtonNumber << F(" timed out.") << endl;
-  //     cancelEntranceButton();
-  //   }
-  // }
-
-  // bottom of loop()
 }
 
 // setup VLCB - runs once at power on from setup()
@@ -144,8 +117,8 @@ void setupVLCB()
   ecService.setEventHandler(eventhandler);
 
   // configure and start CAN bus and VLCB message processing
-  can2040.setNumBuffers(2, 2);     // more buffers = more memory used, fewer = less
-  can2040.setPins(9, 1);           // select pins for CAN bus CE and interrupt connections  **TODO: CHECK THIS **
+  can2040.setNumBuffers(2, 2);  
+  can2040.setPins(9, 1);        
 
   if (!can2040.begin())
   {
@@ -160,27 +133,6 @@ void setupVLCB()
   Serial << F(", NN = ") << VLCB::getNodeNum() << endl;
 
 }
-
-// // An entrance button has been pressed, so save away the possible exit buttons and consequent routes
-// void saveRoutesFromEvent(byte eventIndex)
-// {
-//    // Save routes for this event for next button press.
-//    for (byte i = 0; i < NumExitRouteEVs; i++)
-//    {
-//      possibleExitButtons[i] = VLCB::getEventEVval(eventIndex, i + FirstExitButtonNumberEV);
-//      possibleRoutes[i] = VLCB::getEventEVval(eventIndex, i + FirstRouteNumberEV);
-//    }
-
-//    // Report the possible buttons and routes
-//    for (byte i = 0; i < NumExitRouteEVs; i++)
-//    {
-//      // Ignore any non-set values
-//      if(possibleExitButtons[i] != 0 && possibleExitButtons[i] != 255)
-//      {
-//        Serial << F("Possible exit button ") << possibleExitButtons[i] << F(" for route ") << possibleRoutes[i] << endl;
-//      }
-//    }
-// }
 
 // user-defined event processing function
 // called from the VLCB library when a learned event is received
@@ -317,64 +269,6 @@ void ProcessTrackCleared(byte eventIndex, int pointNumber)
     Serial << F("The track over ") << GetPointNumberDisplay(pointNumber) << F(" is no longer occupied.");
 }
 
-
-
-// void ProcessEntranceButton(byte eventIndex)
-// {
-//   // Get the button type and the button number
-//   int buttonType = GetButtonTypeFromEvent(eventIndex);
-//   int buttonNumber = GetButtonNumberFromEvent(eventIndex);
-  
-//   // Get out if the button is not valid as an entrance
-//   if(buttonType != 1 && buttonType !=2)
-//   {
-//     Serial << F("> Button ") << buttonNumber << F(" is not an entrance button - ignored") << endl; 
-//     return;
-//   }
-
-//   // Set the two global variables which will keep track of the entrance button
-//   activeEntranceButtonNumber = buttonNumber;
-//   timeEntranceButtonPressed = millis();
-
-//   flashEntranceButton();
-
-//   // Record the valid exit buttons and routes for this entrance
-//   saveRoutesFromEvent(eventIndex);
-// }
-
-// void ProcessExitButton(byte eventIndex)
-// {
-//   // Get the button type and the button number
-//   int buttonType = GetButtonTypeFromEvent(eventIndex);
-//   int buttonNumber = GetButtonNumberFromEvent(eventIndex);
-  
-//   // Get out if the button is not valid as an exit
-//   if(buttonType != 2 && buttonType !=3)
-//   {
-//     Serial << F("> Button ") << buttonNumber << F(" is not an exit button - ignored") << endl; 
-//     cancelEntranceButton();
-//     return;
-//   }
-
-//   // Get out if the button is not valid as an exit for the currently selected entrance, otherwise
-//   // call the requested route.
-//   for (byte i = 0; i < NumExitRouteEVs; i++)
-//   {
-//     if(buttonNumber = possibleExitButtons[i])
-//     {
-//       // The button has matched, so call the route
-//       Serial << F("> Button ") << buttonNumber << F(" is a valid exit, calling route ") << possibleRoutes[i] << endl; 
-//       steadyEntranceButton();
-//       sendOnEvent(PRODUCED_EVENT_CALL_ROUTE, possibleRoutes[i]);
-//       return; // Get out if we have called a route
-//     }
-//   }
-
-//   // This code is only reached if the exit button isn't valid for the entrance
-//   Serial << F("Button ") << buttonNumber << F(" is not a valid exit for entrance ") << activeEntranceButtonNumber << endl;
-//   cancelEntranceButton();
-// }
-
 int GetEventTypeFromEvent(byte eventIndex)
 {
   int eventType = VLCB::getEventEVval(eventIndex, EV_TYPE);
@@ -389,7 +283,7 @@ int GetPointNumberFromEvent(byte eventIndex)
 
 point GetPointFromInternalNumber(int pointNumber)
 {
-  int items = sizeof(points) / sizeof(points[0]);
+  int items = GetPointCount();
   int counter;
 
   for(counter = 0; counter < items; counter++)
@@ -402,6 +296,13 @@ point GetPointFromInternalNumber(int pointNumber)
 
   return points[counter]; // TODO some error checking
 
+}
+
+// How many points are defined
+int GetPointCount()
+{
+  int itemCount = sizeof(points) / sizeof(points[0]);
+  return itemCount;
 }
 
 char * GetPointNumberDisplay(int pointNumber)
@@ -429,27 +330,6 @@ char * GetPointNumberDisplay(int pointNumber)
   return outputBuffer;
 }
 
-// void cancelEntranceButton()
-// {
-//   sendOffEvent(PRODUCED_EVENT_FLASH_LIGHT, activeEntranceButtonNumber);
-//   Serial << F("> Entrance button ") << activeEntranceButtonNumber << F(" action cancelled.") << endl;
-//   activeEntranceButtonNumber = 0;
-// }
-
-// void flashEntranceButton()
-// {
-//   sendOnEvent(PRODUCED_EVENT_FLASH_LIGHT, activeEntranceButtonNumber);
-//   Serial << F("> Entrance button ") << activeEntranceButtonNumber << F(" start of route calling process.") << endl;
-//   activeEntranceButtonNumber = 0;
-// }
-
-// void steadyEntranceButton()
-// {
-//   sendOnEvent(PRODUCED_EVENT_STEADY_LIGHT, activeEntranceButtonNumber);
-//   Serial << F("> Entrance button ") << activeEntranceButtonNumber << F(" released after route called.") << endl;
-//   activeEntranceButtonNumber = 0;
-// }
-
 void sendOnEvent(int eventType, int eventNumber)
 {
   VLCB::sendMessageWithNN(OPC_ACON, eventType, eventNumber);
@@ -458,6 +338,30 @@ void sendOnEvent(int eventType, int eventNumber)
 void sendOffEvent(int eventType, int eventNumber)
 {
   VLCB::sendMessageWithNN(OPC_ACOF, eventType, eventNumber);
+}
+
+void process_serial_input() 
+{
+  if (Serial.available()) 
+  {
+
+    char inputChar = Serial.read();
+
+    switch (inputChar) {
+
+      case 'c':
+        printConfig();
+        break;
+
+      case 'p':
+        printPointConfiguration();
+        break;
+
+      default:
+        // Serial << F("> unknown command ") << c << endl;
+        break;
+    }
+  }
 }
 
 // print code version config details and copyright notice
@@ -469,4 +373,24 @@ void printConfig()
 
   // copyright
   Serial << F("> © Nick Locke (MERG 3518) 2026") << endl;
+}
+
+void printPointConfiguration()
+{
+  int items = GetPointCount();
+  int counter;
+
+  for(counter = 0; counter < items; counter++)
+  {
+    int internalNumber = points[counter].internal_number;
+
+    Serial << GetPointNumberDisplay(internalNumber);
+
+    if(counter + 1 < items)
+    {
+      Serial << F(", ");
+    }
+  }
+
+  Serial << endl;
 }
