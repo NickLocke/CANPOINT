@@ -71,6 +71,12 @@ enum {
 void setup() {
   
   Serial.begin(115200);
+
+  unsigned long serialStartupTimer = millis();
+
+  while (!Serial && millis() - serialStartupTimer < 5000);
+
+
   Serial << endl
          << endl
          << F("> ** CANPOINT ** ") << endl;
