@@ -23,22 +23,20 @@ typedef struct {
   bool reverse_route_called;
   bool detected_normal;
   bool detected_reverse;
-  bool lockedNormal;
-  bool lockedReverse;
 } point;
 
 // global points array
 
 point points[] = {
 
-  { 2322, 1, { { 0, false }, { 0, false } }, { { 4, false }, { 5, false } }, { 1, 2 }, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 2323, 2, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 2324, 3, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 2325, 4, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 2326, 5, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 2327, 6, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 0 }, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 2328, 7, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 4 }, 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 2329, 8, { { 0, false }, { 0, false } }, { { 7, false }, { 0, false } }, { 4, 0 }, 0, 0, 0, 0, 0, 0, 0, 0 },
+  { 2322, 1, { { 0, false }, { 0, false } }, { { 4, false }, { 5, false } }, { 1, 2 }, false, false, false, false, false, false },
+  { 2323, 2, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, false, false, false, false, false, false },
+  { 2324, 3, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, false, false, false, false, false, false },
+  { 2325, 4, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, false, false, false, false, false, false },
+  { 2326, 5, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, false, false, false, false, false, false },
+  { 2327, 6, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 0 }, false, false, false, false, false, false },
+  { 2328, 7, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 4 }, false, false, false, false, false, false },
+  { 2329, 8, { { 0, false }, { 0, false } }, { { 7, false }, { 0, false } }, { 4, 0 }, false, false, false, false, false, false }
 
 };
 
@@ -52,10 +50,10 @@ typedef struct {
 
 trackCircuit trackCircuits[] = {
 
-  { 809, 1, 1 },
-  { 810, 2, 1 },
-  { 811, 3, 1 },
-  { 817, 4, 1 },
-  { 820, 5, 1 }
+  { 809, 1, true },
+  { 810, 2, true },
+  { 811, 3, true },
+  { 817, 4, true },
+  { 820, 5, true }
 
 };

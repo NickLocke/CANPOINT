@@ -42,9 +42,7 @@ VLCB::EventProducerService epService;
 
 // Event Variable (EV) structure
 const int EV_TYPE = 1;
-const int EV_POINT_NUMBER = 2;
-const int EV_POINT_NUMBER_2 = 3;
-const int EV_POINT_NUMBER_3 = 4;
+const int EV_NUMBER = 2;
 
 // Produced event groupings (becomes the high byte of the event number)
 enum {
@@ -125,7 +123,7 @@ void setupVLCB() {
   ecService.setEventHandler(eventhandler);
 
   // configure and start CAN bus and VLCB message processing
-  can2040.setNumBuffers(16, 16);
+  can2040.setNumBuffers(16, 32);
   can2040.setPins(9, 1);
 
   if (!can2040.begin()) {
@@ -150,36 +148,36 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg) {
   bool actionType = (msg->data[0] & 0x01) == 0;  // True for on, false for off
 
   int eventType = GetEventTypeFromEvent(eventIndex);
-  int pointNumber = GetPointNumberFromEvent(eventIndex);
+  int number = GetNumberFromEvent(eventIndex);
 
   switch (eventType) {
 
     case CONSUMED_EVENT_POINT_SWITCH_NORMAL:
-      actionType ? ProcessSwitchNormalOn(eventIndex, pointNumber) : ProcessSwitchNormalOff(eventIndex, pointNumber);
+      actionType ? ProcessSwitchNormalOn(number) : ProcessSwitchNormalOff(number);
       break;
 
     case CONSUMED_EVENT_POINT_SWITCH_REVERSE:
-      actionType ? ProcessSwitchReverseOn(eventIndex, pointNumber) : ProcessSwitchReverseOff(eventIndex, pointNumber);
+      actionType ? ProcessSwitchReverseOn(number) : ProcessSwitchReverseOff(number);
       break;
 
     case CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_NORMAL:
-      actionType ? ProcessRouteRequiringNormalCalled(eventIndex, pointNumber) : ProcessRouteRequiringNormalCleared(eventIndex, pointNumber);
+      actionType ? ProcessRouteRequiringNormalCalled(number) : ProcessRouteRequiringNormalCleared(number);
       break;
 
     case CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_REVERSE:
-      actionType ? ProcessRouteRequiringReverseCalled(eventIndex, pointNumber) : ProcessRouteRequiringReverseCleared(eventIndex, pointNumber);
+      actionType ? ProcessRouteRequiringReverseCalled(number) : ProcessRouteRequiringReverseCleared(number);
       break;
 
     case CONSUMED_EVENT_DETECTED_NORMAL:
-      actionType ? ProcessDetectedNormal(eventIndex, pointNumber) : ProcessNormalDetectionLost(eventIndex, pointNumber);
+      actionType ? ProcessDetectedNormal(number) : ProcessNormalDetectionLost(number);
       break;
 
     case CONSUMED_EVENT_DETECTED_REVERSE:
-      actionType ? ProcessDetectedReverse(eventIndex, pointNumber) : ProcessReverseDetectionLost(eventIndex, pointNumber);
+      actionType ? ProcessDetectedReverse(number) : ProcessReverseDetectionLost(number);
       break;
 
     case CONSUMED_EVENT_TRACK_OCCUPIED:
-      actionType ? ProcessTrackOccupied(eventIndex, pointNumber) : ProcessTrackCleared(eventIndex, pointNumber);
+      actionType ? ProcessTrackOccupied(number) : ProcessTrackCleared(number);
       break;
 
     default:
@@ -188,74 +186,117 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg) {
   }
 }
 
-void ProcessSwitchNormalOn(byte eventIndex, int pointNumber) {
+void ProcessSwitchNormalOn(int pointNumber) {
   // The control panel switch has been moved to the normal position
-  Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved to normal position.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  point->switch_normal = true;
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" switch moved to normal position.") << endl;
 }
 
-void ProcessSwitchNormalOff(byte eventIndex, int pointNumber) {
+void ProcessSwitchNormalOff(int pointNumber) {
   // The control panel switch has been moved away from the normal position
-  Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved from normal to centre position.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  point->switch_normal = false;
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" switch moved from normal to centre position.") << endl;
 }
 
-void ProcessSwitchReverseOn(byte eventIndex, int pointNumber) {
+void ProcessSwitchReverseOn(int pointNumber) {
   // The control panel switch has been moved to the reverse position
-  Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved to reverse position.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  point->switch_reverse = true;
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" switch moved to reverse position.") << endl;
 }
 
-void ProcessSwitchReverseOff(byte eventIndex, int pointNumber) {
+void ProcessSwitchReverseOff(int pointNumber) {
   // The control panel switch has been moved away from the reverse position
-  Serial << GetPointNumberDisplay(pointNumber) << F(" switch moved from reverse to centre position.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  point->switch_reverse = false;
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" switch moved from reverse to centre position.") << endl;
 }
 
-void ProcessRouteRequiringNormalCalled(byte eventIndex, int pointNumber) {
+void ProcessRouteRequiringNormalCalled(int pointNumber) {
   // A route which requires the points to be locked normal has been called
-  Serial << F("A route which requires ") << GetPointNumberDisplay(pointNumber) << F(" to be in the normal position has been called.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << F("A route which requires ") << GetPointNumberDisplay(*point) << F(" to be in the normal position has been called.") << endl;
 }
 
-void ProcessRouteRequiringNormalCleared(byte eventIndex, int pointNumber) {
+void ProcessRouteRequiringNormalCleared(int pointNumber) {
   // A route which requires the points to be locked normal has been cleared
-  Serial << F("A route which required ") << GetPointNumberDisplay(pointNumber) << F(" to be in the normal position has been cleared.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << F("A route which required ") << GetPointNumberDisplay(*point) << F(" to be in the normal position has been cleared.") << endl;
 }
 
-void ProcessRouteRequiringReverseCalled(byte eventIndex, int pointNumber) {
+void ProcessRouteRequiringReverseCalled(int pointNumber) {
   // A route which requires the points to be locked reverse has been called
-  Serial << F("A route which requires ") << GetPointNumberDisplay(pointNumber) << F(" to be in the reverse position has been called.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << F("A route which requires ") << GetPointNumberDisplay(*point) << F(" to be in the reverse position has been called.") << endl;
 }
 
-void ProcessRouteRequiringReverseCleared(byte eventIndex, int pointNumber) {
+void ProcessRouteRequiringReverseCleared(int pointNumber) {
   // A route which requires the points to be locked reverse has been cleared
-  Serial << F("A route which required ") << GetPointNumberDisplay(pointNumber) << F(" to be in the reverse position has been cleared.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << F("A route which required ") << GetPointNumberDisplay(*point) << F(" to be in the reverse position has been cleared.") << endl;
 }
 
-void ProcessDetectedNormal(byte eventIndex, int pointNumber) {
+void ProcessDetectedNormal(int pointNumber) {
   // The points have been detected normal
-  Serial << GetPointNumberDisplay(pointNumber) << F(" detected normal.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" detected normal.") << endl;
 }
 
-void ProcessNormalDetectionLost(byte eventIndex, int pointNumber) {
+void ProcessNormalDetectionLost(int pointNumber) {
   // The points are no longer detected normal
-  Serial << GetPointNumberDisplay(pointNumber) << F(" no longer detected normal.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" no longer detected normal.") << endl;
 }
 
-void ProcessDetectedReverse(byte eventIndex, int pointNumber) {
+void ProcessDetectedReverse(int pointNumber) {
   // The points have been detected reverse
-  Serial << GetPointNumberDisplay(pointNumber) << F(" detected reverse.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" detected reverse.") << endl;
 }
 
-void ProcessReverseDetectionLost(byte eventIndex, int pointNumber) {
+void ProcessReverseDetectionLost(int pointNumber) {
   // The points are no longer detected reverse
-  Serial << GetPointNumberDisplay(pointNumber) << F(" no longer detected reverse.") << endl;
+  point* point = GetPointFromInternalNumber(pointNumber);
+  Serial << F("> Point ") << GetPointNumberDisplay(*point) << F(" no longer detected reverse.") << endl;
 }
 
-void ProcessTrackOccupied(byte eventIndex, int pointNumber) {
-  // The track circuit over the points has become occupied
-  Serial << F("The track over ") << GetPointNumberDisplay(pointNumber) << F(" has become occupied.") << endl;
+void ProcessTrackOccupied(int trackCircuitNumber) {
+  // The track circuit has become occupied
+  trackCircuit* trackCircuit = GetTrackCircuitFromInternalNumber(trackCircuitNumber);
+  trackCircuit->occupied = true;
+  Serial << F("> Track circuit ") << GetTrackCircuitNumberDisplay(*trackCircuit) << F(" has become occupied.") << endl;
 }
 
-void ProcessTrackCleared(byte eventIndex, int pointNumber) {
-  // The track circuit over the points has become clear
-  Serial << F("The track over ") << GetPointNumberDisplay(pointNumber) << F(" is no longer occupied.") << endl;
+void ProcessTrackCleared(int trackCircuitNumber) {
+  // The track circuit has become clear
+  trackCircuit* trackCircuit = GetTrackCircuitFromInternalNumber(trackCircuitNumber);
+  trackCircuit->occupied = false;
+  Serial << F("> Track circuit ") << GetTrackCircuitNumberDisplay(*trackCircuit) << F(" is now clear.") << endl;
+}
+
+bool CanPointMoveToNormal(point point)
+{
+  // The point switch is set against the movement
+  if(point.switch_reverse) return false;
+
+  // A conflicting route has been requested
+  if(point.reverse_route_called) return false;
+
+  return true;
+}
+
+bool CanPointMoveToReverse(point point)
+{
+  // The point switch is set against the movement
+  if(point.switch_normal) return false;
+
+  // A conflicting route has been requested
+  if(point.normal_route_called) return false;
+
+  return true;
+  
 }
 
 int GetEventTypeFromEvent(byte eventIndex) {
@@ -263,52 +304,107 @@ int GetEventTypeFromEvent(byte eventIndex) {
   return eventType;
 }
 
-int GetPointNumberFromEvent(byte eventIndex) {
-  int pointNumber = VLCB::getEventEVval(eventIndex, EV_POINT_NUMBER);
-  return pointNumber;
+int GetNumberFromEvent(byte eventIndex) {
+  int number = VLCB::getEventEVval(eventIndex, EV_NUMBER);
+  return number;
 }
 
-point GetPointFromInternalNumber(int pointNumber) {
+point* GetPointFromInternalNumber(int pointNumber) {
   int items = GetPointCount();
   int counter;
 
   for (counter = 0; counter < items; counter++) {
     if (points[counter].internal_number == pointNumber) {
-      break;
+      return &points[counter];
     }
   }
 
-  return points[counter];  // TODO some error checking
+  Serial << F("< Point number ") << pointNumber << F(" was not found.");
+  return NULL;  
+}
+
+trackCircuit* GetTrackCircuitFromInternalNumber(int trackCircuitNumber) {
+  int items = GetTrackCircuitCount();
+  int counter;
+
+  for (counter = 0; counter < items; counter++) {
+    if (trackCircuits[counter].internal_number == trackCircuitNumber) {
+      return &trackCircuits[counter];
+    }
+  }
+
+  Serial << F("< Track circuit number ") << trackCircuitNumber << F(" was not found.");
+  return NULL;  
 }
 
 // How many points are defined
 int GetPointCount() {
-  int itemCount = sizeof(points) / sizeof(points[0]);
-  return itemCount;
+  int pointCount = sizeof(points) / sizeof(points[0]);
+  return pointCount;
 }
 
-char *GetPointNumberDisplay(int pointNumber) {
-  point point = GetPointFromInternalNumber(pointNumber);
+// How many track circuits are defined
+int GetTrackCircuitCount() {
+  int trackCircuitCount = sizeof(trackCircuits) / sizeof(trackCircuits[0]);
+  return trackCircuitCount;
+}
+
+char *GetPointNumberDisplay(point point) {
 
   static char outputBuffer[64];  // Static means that the memory is reserved and reused across multiple calls.
   static char workingBuffer[20];
 
   outputBuffer[0] = '\0';
 
-  int externalNumber = point.external_number;
-
-  strcat(outputBuffer, "Points ");
-
-  snprintf(workingBuffer, sizeof(workingBuffer), "%u", externalNumber);
+  snprintf(workingBuffer, sizeof(workingBuffer), "%u", point.external_number);
   strcat(outputBuffer, workingBuffer);
 
   strcat(outputBuffer, " (");
 
-  snprintf(workingBuffer, sizeof(workingBuffer), "%u", pointNumber);
+  snprintf(workingBuffer, sizeof(workingBuffer), "%u", point.internal_number);
   strcat(outputBuffer, workingBuffer);
 
   strcat(outputBuffer, ")");
   return outputBuffer;
+}
+
+char *GetTrackCircuitNumberDisplay(trackCircuit trackCircuit) {
+
+  static char outputBuffer[64];  // Static means that the memory is reserved and reused across multiple calls.
+  static char workingBuffer[20];
+
+  outputBuffer[0] = '\0';
+
+  snprintf(workingBuffer, sizeof(workingBuffer), "%u", trackCircuit.external_number);
+  strcat(outputBuffer, workingBuffer);
+
+  strcat(outputBuffer, " (");
+
+  snprintf(workingBuffer, sizeof(workingBuffer), "%u", trackCircuit.internal_number);
+  strcat(outputBuffer, workingBuffer);
+
+  strcat(outputBuffer, ")");
+  return outputBuffer;
+}
+
+const char *GetPointSwitchPositionDisplay(point point) {
+
+  if(point.switch_normal && !point.switch_reverse)
+  {
+    return "Normal ";
+  }
+
+  if(point.switch_reverse && !point.switch_normal)
+  {
+    return "Reverse";
+  }
+
+  if(!point.switch_normal && !point.switch_reverse)
+  {
+    return "Centre ";
+  }
+
+  return "Error  "; // This means both normal and reverse are on
 }
 
 void sendOnEvent(int eventType, int eventNumber) {
@@ -332,6 +428,10 @@ void process_serial_input() {
 
       case 'p':
         printPointConfiguration();
+        break;
+
+      case 't':
+        printTrackCircuitConfiguration();
         break;
 
       case '\r':
@@ -359,15 +459,46 @@ void printPointConfiguration() {
   int items = GetPointCount();
   int counter;
 
+  Serial << endl << F("CURRENT POINT STATUS") << endl;
+  Serial << F("Number   Switch  CanMoveN CanMoveR") << endl;
+
   for (counter = 0; counter < items; counter++) {
-    int internalNumber = points[counter].internal_number;
 
-    Serial << GetPointNumberDisplay(internalNumber);
+    Serial << GetPointNumberDisplay(points[counter]);
 
-    if (counter + 1 < items) {
-      Serial << F(", ");
-    }
+    Serial << F(" ");
+
+    Serial << GetPointSwitchPositionDisplay(points[counter]);
+
+    Serial << F(" ");
+
+    Serial << F(CanPointMoveToNormal(points[counter]) ? "Yes" : "No ");
+
+    Serial << F("      ");
+
+    Serial << F(CanPointMoveToReverse(points[counter]) ? "Yes" : "No ");
+
+    Serial << endl;
+  }
+}
+
+void printTrackCircuitConfiguration() {
+  int items = GetTrackCircuitCount();
+  int counter;
+
+  Serial << endl << F("CURRENT TRACK CIRCUIT STATUS") << endl;
+  Serial << F("Number  State") << endl;
+
+  for (counter = 0; counter < items; counter++) {
+
+    Serial << GetTrackCircuitNumberDisplay(trackCircuits[counter]);
+
+    Serial << F(" ");
+
+    Serial << F(trackCircuits[counter].occupied ? "Occupied" : "Clear");
+
+    Serial << endl;
   }
 
-  Serial << endl;
+  
 }
