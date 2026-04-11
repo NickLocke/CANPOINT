@@ -32,7 +32,7 @@ VLCB::VCAN2040 can2040;
 
 // Service objects
 VLCB::LEDUserInterface ledUserInterface(LED_GRN, LED_YLW, SWITCH0);
-VLCB::SerialUserInterface serialUserInterface;
+// VLCB::SerialUserInterface serialUserInterface;
 VLCB::MinimumNodeServiceWithDiagnostics mnService;
 VLCB::CanServiceWithDiagnostics canService(&can2040);
 VLCB::NodeVariableService nvService;
@@ -43,6 +43,8 @@ VLCB::EventProducerService epService;
 // Event Variable (EV) structure
 const int EV_TYPE = 1;
 const int EV_POINT_NUMBER = 2;
+const int EV_POINT_NUMBER_2 = 3;
+const int EV_POINT_NUMBER_3 = 4;
 
 // Produced event groupings (becomes the high byte of the event number)
 enum {
@@ -104,12 +106,12 @@ void loop() {
 void setupVLCB() {
   VLCB::checkStartupAction(LED_GRN, LED_YLW, SWITCH0);
 
-  VLCB::setServices({ &mnService, &ledUserInterface, &serialUserInterface, &canService, &nvService,
+  VLCB::setServices({ &mnService, &ledUserInterface, &canService, &nvService,
                       &ecService, &epService, &etService });
 
   // set config layout parameters
   VLCB::setNumNodeVariables(0);
-  VLCB::setMaxEvents(64);
+  VLCB::setMaxEvents(128);
   VLCB::setNumEventVariables(2);
 
   // set module parameters
@@ -123,7 +125,7 @@ void setupVLCB() {
   ecService.setEventHandler(eventhandler);
 
   // configure and start CAN bus and VLCB message processing
-  can2040.setNumBuffers(2, 2);
+  can2040.setNumBuffers(16, 16);
   can2040.setPins(9, 1);
 
   if (!can2040.begin()) {
@@ -332,8 +334,12 @@ void process_serial_input() {
         printPointConfiguration();
         break;
 
+      case '\r':
+	    case '\n':
+	      break;
+
       default:
-        Serial << F("> unknown command ") << inputChar << endl;
+        Serial << F("> Unknown command ") << inputChar << endl;
         break;
     }
   }

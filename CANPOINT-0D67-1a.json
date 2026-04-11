@@ -45,6 +45,22 @@
     {
       "displayTitle": "Internal point number",
       "type" : "EventVariableNumber",
+      "visibilityLogic": 
+      {
+        "JLL":{"!=":[{"EV":[1]}, 7]}
+      },
+      "eventVariableIndex": 2,
+      "minValue": 1,
+      "maxValue": 255
+    },
+
+    {
+      "displayTitle": "Internal track circuit number",
+      "type" : "EventVariableNumber",
+      "visibilityLogic": 
+      {
+        "JLL":{"==":[{"EV":[1]}, 7]}
+      },
       "eventVariableIndex": 2,
       "minValue": 1,
       "maxValue": 255
