@@ -29,14 +29,22 @@
         },
         {
           "value": 5,
-          "label": "Points detected normal"
+          "label": "Points detected normal A end"
         },
         {
           "value": 6,
-          "label": "Points detected reverse"
+          "label": "Points detected normal B end"
         },
         {
           "value": 7,
+          "label": "Points detected reverse A end"
+        },
+        {
+          "value": 8,
+          "label": "Points detected reverse B end"
+        },
+        {
+          "value": 9,
           "label": "Track occupied"
         }
       ]
@@ -47,7 +55,7 @@
       "type" : "EventVariableNumber",
       "visibilityLogic": 
       {
-        "JLL":{"!=":[{"EV":[1]}, 7]}
+        "JLL":{"!=":[{"EV":[1]}, 9]}
       },
       "eventVariableIndex": 2,
       "minValue": 1,
@@ -59,7 +67,7 @@
       "type" : "EventVariableNumber",
       "visibilityLogic": 
       {
-        "JLL":{"==":[{"EV":[1]}, 7]}
+        "JLL":{"==":[{"EV":[1]}, 9]}
       },
       "eventVariableIndex": 2,
       "minValue": 1,

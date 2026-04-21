@@ -21,22 +21,25 @@ typedef struct {
   bool switch_reverse;
   bool normal_route_called;
   bool reverse_route_called;
-  bool detected_normal;
-  bool detected_reverse;
+  bool detected_normal_A_end;
+  bool detected_reverse_A_end;
+  bool detected_normal_B_end;  // If there is no B end, this must be set to true to imply permanent detection
+  bool detected_reverse_B_end; // If there is no B end, this must be set to true to imply permanent detection
 } point;
 
 // global points array
 
 point points[] = {
 
-  { 2322, 1, { { 0, false }, { 0, false } }, { { 4, false }, { 5, false } }, { 1, 2 }, false, false, false, false, false, false },
-  { 2323, 2, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, false, false, false, false, false, false },
-  { 2324, 3, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, false, false, false, false, false, false },
-  { 2325, 4, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, false, false, false, false, false, false },
-  { 2326, 5, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, false, false, false, false, false, false },
-  { 2327, 6, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 0 }, false, false, false, false, false, false },
-  { 2328, 7, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 4 }, false, false, false, false, false, false },
-  { 2329, 8, { { 0, false }, { 0, false } }, { { 7, false }, { 0, false } }, { 4, 0 }, false, false, false, false, false, false }
+//  Number       Normal 1      Normal 2          Reverse 1     Reverse 2      Tracks   SW N   SW R   Rte N  Rte R  Det NA Det RA Det NB Det RB 
+  { 2322, 1, { { 0, false }, { 0, false } }, { { 4, false }, { 5, false } }, { 1, 2 }, false, false, false, false, false, false, false, false },
+  { 2323, 2, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, false, false, false, false, false, false, true,  true },
+  { 2324, 3, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 5, 0 }, false, false, false, false, false, false, true,  true },
+  { 2325, 4, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, false, false, false, false, false, false, false, false },
+  { 2326, 5, { { 0, false }, { 0, false } }, { { 1, false }, { 0, false } }, { 2, 0 }, false, false, false, false, false, false, true,  true },
+  { 2327, 6, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 0 }, false, false, false, false, false, false, true,  true },
+  { 2328, 7, { { 0, false }, { 0, false } }, { { 0, false }, { 0, false } }, { 3, 4 }, false, false, false, false, false, false, false, false },
+  { 2329, 8, { { 0, false }, { 0, false } }, { { 7, false }, { 0, false } }, { 4, 0 }, false, false, false, false, false, false, true,  true }
 
 };
 
@@ -50,10 +53,10 @@ typedef struct {
 
 trackCircuit trackCircuits[] = {
 
-  { 809, 1, true },
-  { 810, 2, true },
-  { 811, 3, true },
-  { 817, 4, true },
-  { 820, 5, true }
+  { 809, 1, false },
+  { 810, 2, false },
+  { 811, 3, false },
+  { 817, 4, false },
+  { 820, 5, false }
 
 };

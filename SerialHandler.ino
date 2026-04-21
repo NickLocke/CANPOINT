@@ -43,26 +43,34 @@ void printPointConfiguration() {
   int counter;
 
   Serial << endl << F("CURRENT POINT STATUS") << endl;
-  Serial << F("Number   Switch  CanMoveN CanMoveR") << endl;
+  Serial << F("Number   Switch  Route          Tracks   CanMoveN CanMoveR DetNA DetNB DetRA DetRB") << endl;
 
   for (counter = 0; counter < items; counter++) {
-
     Serial << GetPointNumberDisplay(points[counter]);
-
     Serial << F(" ");
-
     Serial << GetPointSwitchPositionDisplay(points[counter]);
-
     Serial << F(" ");
-
+    Serial << GetRouteCalledDisplay(points[counter]);
+    Serial << F(" ");
+    Serial << F(IsTrackCircuitOverPointOccupied(points[counter]) ? "Occupied" : "Clear   ");
+    Serial << F(" ");
     Serial << F(CanPointMoveToNormal(points[counter]) ? "Yes" : "No ");
+    Serial << F("      ");
+    Serial << F(CanPointMoveToReverse(points[counter]) ? "Yes" : "No ");
+
 
     Serial << F("      ");
-
-    Serial << F(CanPointMoveToReverse(points[counter]) ? "Yes" : "No ");
+    Serial << F(points[counter].detected_normal_A_end ? "Yes" : "No ");
+    Serial << F("   ");
+    Serial << F(points[counter].detected_normal_B_end ? "Yes" : "No ");
+    Serial << F("   ");
+    Serial << F(points[counter].detected_reverse_A_end ? "Yes" : "No ");
+    Serial << F("   ");
+    Serial << F(points[counter].detected_reverse_B_end ? "Yes" : "No ");
 
     Serial << endl;
   }
+  Serial << endl;
 }
 
 void printTrackCircuitConfiguration() {
@@ -73,13 +81,10 @@ void printTrackCircuitConfiguration() {
   Serial << F("Number  State") << endl;
 
   for (counter = 0; counter < items; counter++) {
-
     Serial << GetTrackCircuitNumberDisplay(trackCircuits[counter]);
-
     Serial << F(" ");
-
     Serial << F(trackCircuits[counter].occupied ? "Occupied" : "Clear");
-
     Serial << endl;
   }
+  Serial << endl;
 }

@@ -48,6 +48,41 @@ int GetTrackCircuitCount() {
   return trackCircuitCount;
 }
 
+bool IsTrackCircuitOverPointOccupied(point point) {
+
+  for (int counter = 0; counter < MAX_TRACK_CIRCUITS; counter++) {
+    int trackCircuitNumber = point.track_locking[counter];
+    
+    if(trackCircuitNumber == 0) break; // Zero means unused, so we don't need to do any more.
+
+    // Non zero, we need to get the status of the track and any one track occupied is all we need.
+    trackCircuit* trackCircuit = GetTrackCircuitFromInternalNumber(trackCircuitNumber);
+    
+    if(trackCircuit->occupied) return true;
+    
+  }
+
+  return false;
+}
+
+void AttemptToMovePoint(point point, char requestedDirection)
+{
+  Serial << F("Checking existing setting");
+  // If the points are already in the requested direction, get out
+  if(point.detected_normal_A_end && point.detected_normal_B_end && requestedDirection == 'N') return;
+  if(point.detected_reverse_A_end && point.detected_reverse_B_end && requestedDirection == 'R') return;
+
+  Serial << F("Checking locks");
+  // If the points cannot move, get out
+  if(requestedDirection == 'N' && !CanPointMoveToNormal(point)) return;
+  if(requestedDirection == 'R' && !CanPointMoveToReverse(point)) return;
+
+  Serial << F("OK to move");
+  // Request the points move
+  requestedDirection == 'N' ? sendOffEvent(PRODUCED_EVENT_POINT_MOTOR, point.internal_number) 
+                            : sendOnEvent(PRODUCED_EVENT_POINT_MOTOR, point.internal_number);
+}
+
 char *GetPointNumberDisplay(point point) {
 
   static char outputBuffer[64];  // Static means that the memory is reserved and reused across multiple calls.
@@ -104,6 +139,37 @@ const char *GetPointSwitchPositionDisplay(point point) {
   }
 
   return "Error  "; // This means both normal and reverse are on
+}
+
+const char *GetRouteCalledDisplay(point point) {
+
+  if(!point.normal_route_called && !point.reverse_route_called)
+  {
+    return "Clear         ";
+  }
+
+  if(point.normal_route_called && !point.reverse_route_called)
+  {
+    return "Called Normal ";
+  }
+
+  if(point.reverse_route_called && !point.normal_route_called)
+  {
+    return "Called Reverse";
+  }
+
+  return "** Error **   "; // This means both normal and reverse have been called
+}
+
+void EvaluatePointSwitchDetectionIndications(point point)
+{
+  (point.detected_normal_A_end && point.detected_normal_B_end)
+    ? sendOnEvent(PRODUCED_EVENT_NORMAL_INDICATION, point.internal_number)
+    : sendOffEvent(PRODUCED_EVENT_NORMAL_INDICATION, point.internal_number);
+
+  (point.detected_reverse_A_end && point.detected_reverse_B_end)
+    ? sendOnEvent(PRODUCED_EVENT_REVERSE_INDICATION, point.internal_number)
+    : sendOffEvent(PRODUCED_EVENT_REVERSE_INDICATION, point.internal_number);
 }
 
 void sendOnEvent(int eventType, int eventNumber) {

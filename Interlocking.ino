@@ -6,6 +6,9 @@ bool CanPointMoveToNormal(point point)
   // A conflicting route has been requested
   if(point.reverse_route_called) return false;
 
+  // Any of the track circuits which relate to the point is occupied
+  if(IsTrackCircuitOverPointOccupied(point)) return false;
+
   return true;
 }
 
@@ -16,6 +19,9 @@ bool CanPointMoveToReverse(point point)
 
   // A conflicting route has been requested
   if(point.normal_route_called) return false;
+
+  // Any of the track circuits which relate to the point is occupied
+  if(IsTrackCircuitOverPointOccupied(point)) return false;
 
   return true;
   

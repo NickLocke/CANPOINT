@@ -28,13 +28,13 @@ const byte SWITCH0 = 5;  // VLCB push button switch pin
 char mname[] = "POINT";
 
 // CAN transport object
-VLCB::VCAN2040 can2040;
+VLCB::VCAN2040 vcan2040;
 
 // Service objects
 VLCB::LEDUserInterface ledUserInterface(LED_GRN, LED_YLW, SWITCH0);
 // VLCB::SerialUserInterface serialUserInterface;
 VLCB::MinimumNodeServiceWithDiagnostics mnService;
-VLCB::CanServiceWithDiagnostics canService(&can2040);
+VLCB::CanServiceWithDiagnostics canService(&vcan2040);
 VLCB::NodeVariableService nvService;
 VLCB::EventConsumerService ecService;
 VLCB::EventTeachingService etService;
@@ -62,8 +62,10 @@ enum {
   CONSUMED_EVENT_POINT_SWITCH_REVERSE,
   CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_NORMAL,
   CONSUMED_EVENT_ROUTE_REQUIRING_POINTS_REVERSE,
-  CONSUMED_EVENT_DETECTED_NORMAL,
-  CONSUMED_EVENT_DETECTED_REVERSE,
+  CONSUMED_EVENT_DETECTED_NORMAL_A_END,
+  CONSUMED_EVENT_DETECTED_NORMAL_B_END,
+  CONSUMED_EVENT_DETECTED_REVERSE_A_END,
+  CONSUMED_EVENT_DETECTED_REVERSE_B_END,
   CONSUMED_EVENT_TRACK_OCCUPIED
 };
 
@@ -123,10 +125,10 @@ void setupVLCB() {
   ecService.setEventHandler(eventhandler);
 
   // configure and start CAN bus and VLCB message processing
-  can2040.setNumBuffers(16, 32);
-  can2040.setPins(9, 1);
+  vcan2040.setNumBuffers(64, 128);
+  vcan2040.setPins(9, 1);
 
-  if (!can2040.begin()) {
+  if (!vcan2040.begin()) {
     Serial << F("> error starting VLCB") << endl;
   }
 
@@ -168,12 +170,20 @@ void eventhandler(byte eventIndex, const VLCB::VlcbMessage *msg) {
       actionType ? ProcessRouteRequiringReverseCalled(number) : ProcessRouteRequiringReverseCleared(number);
       break;
 
-    case CONSUMED_EVENT_DETECTED_NORMAL:
-      actionType ? ProcessDetectedNormal(number) : ProcessNormalDetectionLost(number);
+    case CONSUMED_EVENT_DETECTED_NORMAL_A_END:
+      actionType ? ProcessDetectedNormal(number, 'A') : ProcessNormalDetectionLost(number, 'A');
       break;
 
-    case CONSUMED_EVENT_DETECTED_REVERSE:
-      actionType ? ProcessDetectedReverse(number) : ProcessReverseDetectionLost(number);
+    case CONSUMED_EVENT_DETECTED_NORMAL_B_END:
+      actionType ? ProcessDetectedNormal(number, 'B') : ProcessNormalDetectionLost(number, 'B');
+      break;
+
+    case CONSUMED_EVENT_DETECTED_REVERSE_A_END:
+      actionType ? ProcessDetectedReverse(number, 'A') : ProcessReverseDetectionLost(number, 'A');
+      break;
+
+    case CONSUMED_EVENT_DETECTED_REVERSE_B_END:
+      actionType ? ProcessDetectedReverse(number, 'B') : ProcessReverseDetectionLost(number, 'B');
       break;
 
     case CONSUMED_EVENT_TRACK_OCCUPIED:
